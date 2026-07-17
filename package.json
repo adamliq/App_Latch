@@ -1,0 +1,27 @@
+{
+  "name": "latch-splunk-app-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Development workspace for the Latch Splunk app (SIEM onboarding taxonomy, source catalogue and health-check reference tool).",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "packages/latch"
+  ],
+  "scripts": {
+    "clean": "node scripts/clean.js",
+    "build": "node scripts/build.js",
+    "test": "node scripts/test.js",
+    "lint": "npm run lint --workspace packages/latch",
+    "typecheck": "npm run typecheck --workspace packages/latch",
+    "package": "node scripts/package.js",
+    "validate-release": "node scripts/validate-release.js",
+    "release": "npm run clean && npm run build && npm run package && npm run validate-release"
+  },
+  "devDependencies": {
+    "rimraf": "6.1.3",
+    "tar": "7.5.20"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
