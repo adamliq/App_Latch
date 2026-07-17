@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<view template="latch:/templates/latch_app.html" type="html">
+    <label>Latch</label>
+</view>

@@ -1,0 +1,12 @@
+#
+# Default permissions for the Latch app.
+#
+# The app has no saved searches, lookups, or other knowledge objects that
+# require elevated access — it is a read-only reference UI. Objects default
+# to readable by every role and are not exported outside the app, since the
+# app itself controls whether it is visible (see default/app.conf [ui]).
+#
+
+[]
+access = read : [ * ], write : [ admin ]
+export = none

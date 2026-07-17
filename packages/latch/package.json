@@ -1,0 +1,54 @@
+{
+  "name": "@latch/splunk-app-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Splunk UI Toolkit (SUIT) frontend for the Latch SIEM onboarding and assurance taxonomy app.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "NODE_ENV=production webpack --bail",
+    "start": "NODE_ENV=development webpack --watch",
+    "test": "jest",
+    "test:ci": "jest --ci --coverage",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@splunk/react-icons": "5.13.0",
+    "@splunk/react-page": "8.3.1",
+    "@splunk/react-ui": "5.12.0",
+    "@splunk/splunk-utils": "4.0.0",
+    "@splunk/themes": "1.9.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.4",
+    "styled-components": "5.3.11"
+  },
+  "devDependencies": {
+    "@babel/core": "7.29.7",
+    "@splunk/babel-preset": "4.0.0",
+    "@splunk/eslint-config": "6.0.0",
+    "@splunk/webpack-configs": "7.0.3",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/jest": "30.0.0",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@types/styled-components": "5.1.36",
+    "babel-loader": "8.4.1",
+    "copy-webpack-plugin": "14.0.0",
+    "eslint": "9.39.4",
+    "identity-obj-proxy": "3.0.0",
+    "jest": "30.4.2",
+    "jest-environment-jsdom": "30.4.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.64.0",
+    "webpack": "5.108.4",
+    "webpack-cli": "5.1.4",
+    "webpack-merge": "6.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

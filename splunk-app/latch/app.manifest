@@ -1,0 +1,54 @@
+{
+    "schemaVersion": "2.0.0",
+    "info": {
+        "title": "Latch",
+        "id": {
+            "group": null,
+            "name": "latch",
+            "version": "1.0.0"
+        },
+        "author": [
+            {
+                "name": "adamliq",
+                "email": null,
+                "company": null
+            }
+        ],
+        "releaseDate": null,
+        "description": "Browse the LATCH SIEM onboarding taxonomy, source catalogue, logging patterns and health checks.",
+        "classification": {
+            "intendedAudience": "SOC analysts, security engineers, and Splunk onboarding administrators",
+            "categories": [
+                "Security",
+                "Utilities"
+            ],
+            "developmentStatus": "Production/Stable"
+        },
+        "commonInformationModels": null,
+        "license": {
+            "name": "Apache-2.0",
+            "text": "LICENSE",
+            "uri": null
+        },
+        "privacyPolicy": {
+            "name": null,
+            "text": "README/PRIVACY.md",
+            "uri": null
+        },
+        "releaseNotes": {
+            "name": null,
+            "text": "README/RELEASE_NOTES.md",
+            "uri": null
+        }
+    },
+    "dependencies": {},
+    "tasks": [],
+    "inputGroups": {},
+    "incompatibleApps": {},
+    "platformRequirements": {
+        "splunk": {
+            "Enterprise": "^9.1",
+            "Cloud": "*"
+        }
+    }
+}

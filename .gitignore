@@ -1,0 +1,21 @@
+node_modules/
+npm-debug.log*
+.npm/
+
+# Build outputs
+packages/*/build/
+packages/*/coverage/
+splunk-app/latch/appserver/static/build/
+splunk-app/latch/appserver/templates/
+dist/
+release/
+*.tgz
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# AppInspect / vetting reports
+appinspect-report/
