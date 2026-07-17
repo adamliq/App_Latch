@@ -73,6 +73,13 @@ to a typical integration app.
 | Denial of service via unbounded rendering | Mitigated | Large tables (390-row Health Checks) are paginated client-side |
 | Clickjacking | Inherited from Splunk Web | The app renders inside Splunk Web's own page chrome and is subject to Splunk Web's own frame-ancestors policy |
 
+## AppInspect
+
+This package has been run through `splunk-appinspect` (`--mode precert`,
+the Splunkbase pre-certification rule set): 0 errors, 0 failures, 3 accepted
+warnings. See `APPINSPECT.md` for how to reproduce this and why each
+warning is accepted.
+
 ## Vulnerability reporting
 
 See `SUPPORT.md` for how to report a security issue.

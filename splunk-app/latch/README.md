@@ -15,3 +15,4 @@ See the `README/` directory for full documentation:
 - `README/TROUBLESHOOTING.md` — common problems
 - `README/THIRD_PARTY_COMPONENTS.md` — bundled third-party software
 - `README/RELEASE_NOTES.md` — version history and known limitations
+- `README/APPINSPECT.md` — how to run Splunk AppInspect locally, and the last recorded result
