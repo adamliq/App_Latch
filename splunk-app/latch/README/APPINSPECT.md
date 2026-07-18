@@ -11,8 +11,8 @@ python3 -m venv /tmp/appinspect-venv
 /tmp/appinspect-venv/bin/pip install "setuptools<81" wheel
 /tmp/appinspect-venv/bin/pip install splunk-appinspect
 
-npm run build && npm run package   # produces release/latch-<version>.tar.gz
-/tmp/appinspect-venv/bin/splunk-appinspect inspect release/latch-1.0.0.tar.gz --mode precert
+npm run build && npm run package   # produces release/latch-<version>.spl
+/tmp/appinspect-venv/bin/splunk-appinspect inspect release/latch-1.0.0.spl --mode precert
 ```
 
 `--mode precert` runs the same, stricter rule set used for Splunkbase

@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 /*
  * Packages splunk-app/latch into a Splunkbase-ready release archive:
- * release/latch-<version>.tar.gz, containing a single top-level `latch/`
+ * release/latch-<version>.spl, containing a single top-level `latch/`
  * directory, plus a .sha256 checksum file and a build report.
+ *
+ * .spl is Splunk's own package format (used by the `splunk package` CLI
+ * command and required for Splunkbase uploads) — it is byte-for-byte a
+ * gzip-compressed tar archive, just with a Splunk-specific extension.
  */
 const fs = require('fs');
 const path = require('path');
@@ -58,7 +62,7 @@ async function main() {
     const manifest = readJson(path.join(APP_DIR, 'app.manifest'));
     const version = manifest.info.id.version;
     const packageName = `latch-${version}`;
-    const archivePath = path.join(RELEASE_DIR, `${packageName}.tar.gz`);
+    const archivePath = path.join(RELEASE_DIR, `${packageName}.spl`);
 
     fs.mkdirSync(RELEASE_DIR, { recursive: true });
     fs.rmSync(archivePath, { force: true });
@@ -82,10 +86,10 @@ async function main() {
 
     const archiveBuffer = fs.readFileSync(archivePath);
     const checksum = crypto.createHash('sha256').update(archiveBuffer).digest('hex');
-    fs.writeFileSync(`${archivePath}.sha256`, `${checksum}  ${packageName}.tar.gz\n`);
+    fs.writeFileSync(`${archivePath}.sha256`, `${checksum}  ${packageName}.spl\n`);
 
     const report = {
-        package: `${packageName}.tar.gz`,
+        package: `${packageName}.spl`,
         version,
         fileCount: allFiles.length,
         sizeBytes: archiveBuffer.length,

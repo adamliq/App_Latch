@@ -5,8 +5,10 @@
 There is none. Latch is a read-only reference tool over data that ships
 inside the app package — there is no credential to add, endpoint to point at,
 proxy to configure, TLS setting to review, index to choose, or input to
-create. `default/app.conf` sets `is_configured = true` because the app is
-fully usable the moment it is installed.
+create. There is no `setup_view`, so the app is fully usable the moment it
+is installed regardless of the `is_configured` flag (which is `false`, as
+Splunk AppInspect requires for any shipped package — see
+`APPINSPECT.md`).
 
 ## Required capabilities per page
 

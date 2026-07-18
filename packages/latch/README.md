@@ -73,7 +73,7 @@ lint/typecheck/test/build/package across the whole workspace:
 
 ```bash
 npm run build             # -> splunk-app/latch/appserver/static/build + templates
-npm run package            # -> release/latch-<version>.tar.gz + .sha256
+npm run package            # -> release/latch-<version>.spl + .sha256
 npm run validate-release
 ```
 

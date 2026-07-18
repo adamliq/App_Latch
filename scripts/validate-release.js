@@ -38,9 +38,9 @@ const REQUIRED_FILES = [
 ];
 
 function findLatestPackage() {
-    const files = fs.readdirSync(RELEASE_DIR).filter((f) => f.endsWith('.tar.gz'));
+    const files = fs.readdirSync(RELEASE_DIR).filter((f) => f.endsWith('.spl'));
     if (files.length === 0) {
-        throw new Error('No .tar.gz package found in release/. Run "npm run package" first.');
+        throw new Error('No .spl package found in release/. Run "npm run package" first.');
     }
     files.sort((a, b) => fs.statSync(path.join(RELEASE_DIR, b)).mtimeMs - fs.statSync(path.join(RELEASE_DIR, a)).mtimeMs);
     return path.join(RELEASE_DIR, files[0]);

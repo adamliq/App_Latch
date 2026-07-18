@@ -30,17 +30,16 @@ collection — the app has no backend component at all.
 ## Splunk Cloud Platform installation
 
 1. Package the app (see the repository root `README.md` / `packages/latch/README.md`
-   for the build, or use a pre-built `latch-<version>.tar.gz` release archive).
+   for the build, or use a pre-built `latch-<version>.spl` release archive).
 2. In Splunk Cloud, go to **Apps → Manage Apps → Install app from file**, or
    submit through Splunkbase/the self-service app vetting workflow if this
    is a public listing.
-3. Because the app requires no configuration (`is_configured = true`,
-   no setup page), it is usable immediately after install — no post-install
-   steps are required.
+3. Because the app requires no configuration and has no setup page, it is
+   usable immediately after install — no post-install steps are required.
 
 ## Splunk Enterprise installation
 
-1. Copy or extract `latch-<version>.tar.gz` so that its single top-level
+1. Copy or extract `latch-<version>.spl` so that its single top-level
    `latch/` directory lands at `$SPLUNK_HOME/etc/apps/latch`.
 2. Restart Splunk Web (`splunk restart splunkweb`), or the whole instance.
 3. The app appears in the app list as **Latch**.
@@ -66,7 +65,7 @@ configuration is required.
 
 ## Rollback procedure
 
-Reinstall the previous version's `latch-<version>.tar.gz` the same way as a
+Reinstall the previous version's `latch-<version>.spl` the same way as a
 fresh install (Splunk treats a lower-version reinstall as a downgrade of the
 app directory contents). There is no persisted configuration or data to
 migrate back.

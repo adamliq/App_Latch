@@ -28,11 +28,11 @@ security documentation for the packaged app.
 ```bash
 npm install          # installs the whole workspace (root + packages/latch)
 npm run build         # lint, typecheck, test, production build, package the app assets
-npm run package        # produce splunk-app/latch → release/latch-<version>.tar.gz
+npm run package        # produce splunk-app/latch → release/latch-<version>.spl
 npm run validate-release
 ```
 
-Install the resulting `release/latch-<version>.tar.gz` into Splunk Enterprise
+Install the resulting `release/latch-<version>.spl` into Splunk Enterprise
 or Splunk Cloud Platform as you would any other app. See
 `splunk-app/latch/README/INSTALL.md` for details.
 
