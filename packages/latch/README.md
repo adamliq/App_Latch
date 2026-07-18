@@ -81,6 +81,10 @@ npm run validate-release
 production webpack build fail, or if the compiled output contains a dev-server
 URL, hot-reload code, or a source map.
 
+`npm run validate-release` additionally requires the Splunk Packaging
+Toolkit (`slim`, `SLIM_BIN` env var) and fails the release if it's missing
+or if SLIM rejects the app — see `../../splunk-app/latch/README/APPINSPECT.md`.
+
 ## Testing
 
 Tests use Jest + React Testing Library and test user-observable behaviour

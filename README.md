@@ -29,8 +29,14 @@ security documentation for the packaged app.
 npm install          # installs the whole workspace (root + packages/latch)
 npm run build         # lint, typecheck, test, production build, package the app assets
 npm run package        # produce splunk-app/latch → release/latch-<version>.spl
-npm run validate-release
+SLIM_BIN=/path/to/slim npm run validate-release
 ```
+
+`npm run validate-release` requires the real Splunk Packaging Toolkit
+(`slim`) to be installed and will **fail the release if it isn't**, since
+Classic Splunk Cloud refuses to install an app SLIM rejects — see
+`splunk-app/latch/README/APPINSPECT.md` for how to install it and why one
+specific, narrowly-matched SLIM finding is treated as non-fatal.
 
 Install the resulting `release/latch-<version>.spl` into Splunk Enterprise
 or Splunk Cloud Platform as you would any other app. See

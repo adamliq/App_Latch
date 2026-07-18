@@ -7,6 +7,9 @@
  *  - required files are present
  *  - JSON and XML files are well-formed
  *  - version numbers agree across app.conf, app.manifest and package.json
+ *  - the real Splunk Packaging Toolkit (SLIM) validates the app; SLIM
+ *    rejecting an app means Classic Splunk Cloud will refuse to install it,
+ *    so this is a hard gate, not an optional check (see checkSlimValidation)
  */
 const fs = require('fs');
 const path = require('path');
@@ -26,6 +29,18 @@ const FORBIDDEN_PATTERNS = [
     /\.map$/,
     /(^|\/)\.env$/,
 ];
+
+// Splunk Cloud Platform (Classic) will not install an app that fails SLIM
+// (Splunk Packaging Toolkit) validation, so this gate must actually run —
+// not be skipped — before a release is considered installable there.
+const SLIM_BIN = process.env.SLIM_BIN || 'slim';
+const SLIM_INSTALL_HELP =
+    'Install it with: python3 -m venv /tmp/spt-venv && ' +
+    '/tmp/spt-venv/bin/pip install --upgrade pip && ' +
+    '/tmp/spt-venv/bin/pip install splunk-packaging-toolkit, then re-run with ' +
+    'SLIM_BIN=/tmp/spt-venv/bin/slim. See README/APPINSPECT.md for the full ' +
+    'recipe, including a workaround for a slim config-loader bug triggered ' +
+    'when both NO_PROXY and no_proxy are set.';
 
 const REQUIRED_FILES = [
     'app.manifest',
@@ -160,6 +175,73 @@ function checkVersionConsistency(appDir) {
     console.log(`Version consistent across package: ${manifestVersion}`);
 }
 
+/**
+ * Runs the real Splunk Packaging Toolkit against the extracted package and
+ * rejects the release unless it passes. `slim` is a hard requirement here,
+ * not an optional/best-effort check: an app SLIM rejects cannot be
+ * installed on Classic Splunk Cloud, so "SLIM isn't installed" must fail
+ * the gate the same as "SLIM found a real problem" would.
+ *
+ * One specific, narrowly-matched exception is tolerated: the pip-published
+ * `splunk-packaging-toolkit` package ships a static, stale list of known
+ * Splunk Enterprise releases (topping out at 8.0.0 as of this writing), so
+ * it rejects any correctly-formed version range this app declares that
+ * targets a newer minimum. That failure mode is confirmed (see
+ * README/APPINSPECT.md) to be a stale-data limitation of the local tool,
+ * not a defect in this app, so it's the only message this function ever
+ * treats as non-fatal — and only when it matches this app's own declared
+ * requirement exactly. Any other SLIM error, or SLIM being unavailable at
+ * all, fails the release.
+ */
+function checkSlimValidation(appDir) {
+    let manifest;
+    try {
+        manifest = JSON.parse(fs.readFileSync(path.join(appDir, 'app.manifest'), 'utf8'));
+    } catch (error) {
+        throw new Error(`Could not read app.manifest to run SLIM validation: ${error.message}`);
+    }
+    const enterpriseRange = manifest.platformRequirements?.splunk?.Enterprise;
+    const knownStaleVersionListMessage = enterpriseRange
+        ? `Version requirement includes no supported version of Splunk Enterprise: ${enterpriseRange}`
+        : null;
+
+    let output;
+    try {
+        // Both NO_PROXY and no_proxy being set trips a DuplicateOptionError
+        // in slim's own config loader (it reads os.environ into a
+        // case-insensitive ConfigParser). Strip the proxy vars for this
+        // subprocess only; slim makes no network calls during validate.
+        const env = { ...process.env };
+        delete env.NO_PROXY;
+        delete env.no_proxy;
+        delete env.HTTPS_PROXY;
+        delete env.https_proxy;
+        output = execFileSync(SLIM_BIN, ['validate', appDir], { env, encoding: 'utf8', stdio: 'pipe' });
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            throw new Error(
+                `SLIM ("${SLIM_BIN}") is not installed or not on PATH. A release cannot be ` +
+                    `validated (and therefore cannot be confirmed installable on Classic Splunk ` +
+                    `Cloud) without it. ${SLIM_INSTALL_HELP}`
+            );
+        }
+        output = `${error.stdout || ''}${error.stderr || ''}`;
+        const errorLines = output.split('\n').filter((line) => line.includes('[ERROR]'));
+        const unacceptedErrors = errorLines.filter(
+            (line) => !(knownStaleVersionListMessage && line.includes(knownStaleVersionListMessage))
+        );
+        if (unacceptedErrors.length > 0) {
+            throw new Error(`SLIM validation rejected the app:\n  ${unacceptedErrors.join('\n  ')}`);
+        }
+        console.log(
+            'SLIM validation passed except for one accepted, known stale-data limitation ' +
+                `of the local toolkit (see README/APPINSPECT.md): ${knownStaleVersionListMessage}`
+        );
+        return;
+    }
+    console.log(output.trim() || 'SLIM validation passed.');
+}
+
 async function main() {
     const archivePath = findLatestPackage();
     console.log(`Validating ${path.relative(ROOT, archivePath)}`);
@@ -173,6 +255,7 @@ async function main() {
         checkJsonFiles(appDir);
         checkXmlFiles(appDir);
         checkVersionConsistency(appDir);
+        checkSlimValidation(appDir);
         console.log(`\nRelease package is valid: ${allFiles.length} files, structure and metadata check out.`);
     } finally {
         fs.rmSync(tempDir, { recursive: true, force: true });

@@ -62,27 +62,47 @@ during development of this app, both now fixed:
    now present and kept in sync by `scripts/build.js`'s version-consistency
    check.
 
-## SLIM (Splunk Packaging Toolkit): how to run it locally
+## SLIM (Splunk Packaging Toolkit): an enforced release gate
 
 `check_that_app_passes_slim_validation_for_cloud` is an AppInspect check
 that, in Splunk's hosted AppInspect API service, shells out to the actual
 Splunk Packaging Toolkit (`slim`) to validate `app.manifest` and package
 structure. It is **not included** in the `splunk-appinspect` PyPI package
 (confirmed: it does not appear in `splunk-appinspect list checks` for
-4.2.1), so `--mode precert` above cannot exercise it. `slim` itself,
-however, is separately pip-installable and can be run directly:
+4.2.1), so `--mode precert` above cannot exercise it.
+
+Classic Splunk Cloud refuses to install an app SLIM rejects, so
+`scripts/validate-release.js` runs `slim validate` against every packaged
+release as a **hard, required gate** (`checkSlimValidation`), not a manual
+or optional step — `npm run validate-release` fails if SLIM finds a real
+problem, *and also* fails if SLIM isn't installed at all (an app that
+can't be validated is treated the same as an app that fails validation).
+The one narrow exception is documented below.
+
+### Installing SLIM
 
 ```bash
 python3 -m venv /tmp/spt-venv
 /tmp/spt-venv/bin/pip install --upgrade pip
 /tmp/spt-venv/bin/pip install splunk-packaging-toolkit
-
-# If your shell exports both NO_PROXY and no_proxy, unset one before running
-# slim — its config loader treats them as a single case-insensitive
-# ConfigParser section and raises DuplicateOptionError otherwise. This is a
-# quirk of slim's own config loading, unrelated to this app.
-env -u no_proxy -u https_proxy /tmp/spt-venv/bin/slim validate splunk-app/latch
 ```
+
+Then point the validator at it:
+
+```bash
+SLIM_BIN=/tmp/spt-venv/bin/slim npm run validate-release
+```
+
+(`SLIM_BIN` defaults to plain `slim`, i.e. whatever's on `PATH`.)
+
+Note: if your shell exports both `NO_PROXY` and `no_proxy`, `slim`'s own
+config loader treats them as a single case-insensitive ConfigParser section
+and raises `DuplicateOptionError` — a quirk of `slim` itself, unrelated to
+this app. `checkSlimValidation` already strips both (and their
+`https_proxy`/`HTTPS_PROXY` counterparts) from the subprocess environment
+it runs `slim` in, so this doesn't need to be worked around manually when
+going through `npm run validate-release`; it only matters if you run `slim`
+directly yourself, e.g. `env -u no_proxy -u NO_PROXY /tmp/spt-venv/bin/slim validate splunk-app/latch`.
 
 ### What this caught, and its own limitation
 
@@ -117,3 +137,12 @@ Before a real Splunkbase submission, either use the hosted AppInspect API
 (which runs the real, current `check_that_app_passes_slim_validation_for_cloud`)
 or install a current `splunk-packaging-toolkit` release with an up-to-date
 `splunk-releases.json` to re-verify the `^9.1` requirement directly.
+
+`checkSlimValidation` doesn't hardcode `^9.1` as an accepted string — it
+reads `platformRequirements.splunk.Enterprise` from `app.manifest` at run
+time and only tolerates a SLIM error that matches *that* declared range
+exactly. If the range is legitimately changed in the future, the accepted
+message updates itself automatically; any error that doesn't match it
+still fails the release, which is the correct fail-closed default if a
+future `splunk-packaging-toolkit` release ever reports something new and
+genuine against this app.
