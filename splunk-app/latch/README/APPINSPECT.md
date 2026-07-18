@@ -104,45 +104,57 @@ it runs `slim` in, so this doesn't need to be worked around manually when
 going through `npm run validate-release`; it only matters if you run `slim`
 directly yourself, e.g. `env -u no_proxy -u NO_PROXY /tmp/spt-venv/bin/slim validate splunk-app/latch`.
 
-### What this caught, and its own limitation
+### What this caught, and a correction
 
-Running it against this app found and led to fixing one real defect, and
-also exposed a limitation in the pip-published `slim` package itself:
+Running it against this app found and led to fixing two real defects. The
+second one was initially misdiagnosed — worth recording accurately rather
+than quietly overwriting:
 
-1. **Real defect (fixed):** `app.manifest`'s `platformRequirements.splunk`
+1. **`platformRequirements.splunk.Cloud` is not a valid key.** `app.manifest`
    originally declared both `"Enterprise": "^9.1"` and `"Cloud": "*"`. `slim`
    rejected `"Cloud"` outright — `Expected a Splunk edition name, not
    "Cloud"` — because `platformRequirements.splunk` only recognizes the
    pre-Cloud-era edition names (`Enterprise`, `Free`, `Light`). Splunk
    Cloud Platform compatibility is not something `app.manifest` declares at
    all; it's evidenced by passing AppInspect's Cloud-tagged checks (which
-   this app does — see above) rather than by a manifest field. The invalid
-   `"Cloud"` key has been removed.
-2. **Tool limitation (not a defect in this app):** with the invalid key
-   removed, `slim validate` still reports
-   `Version requirement includes no supported version of Splunk Enterprise: ^9.1`.
-   This pip package (`splunk-packaging-toolkit` 1.2.8) ships a static,
-   stale `splunk-releases.json` whose newest known Enterprise release is
-   **8.0.0** — it has no knowledge that 9.x exists, regardless of what
-   range syntax is used. This was confirmed by re-running validation
-   against an identical manifest with the range temporarily lowered to
-   `"^8.0"`, which passed both `slim validate` and `slim package` cleanly —
-   proving the `^`-range syntax itself, and every other part of the
-   package, is valid; only this package's bundled version list is out of
-   date. Splunk's hosted AppInspect API service (used for real Splunkbase
-   submissions) uses a current, continuously updated release list and
-   would not hit this.
+   this app does — see above), not by a manifest field. Fixed by removing
+   the invalid key.
+2. **`"Enterprise": "^9.1"` was rejected too, and this is a real,
+   reproducible finding — not a stale-tool artifact.** An earlier version
+   of this document claimed the rejection (`Version requirement includes no
+   supported version of Splunk Enterprise: ^9.1`) was caused by the locally
+   pip-installed `splunk-packaging-toolkit`'s bundled `splunk-releases.json`
+   only listing Enterprise releases up to 8.0.0, and that Splunk's
+   authoritative SSAI/hosted validation would accept `^9.1` since it uses
+   current data. **That was wrong** — the same rejection was independently
+   reproduced against the real, authoritative SLIM validation used for SSAI
+   (Splunk Self-Service App Install), so the cause was not simply local
+   stale data.
 
-Before a real Splunkbase submission, either use the hosted AppInspect API
-(which runs the real, current `check_that_app_passes_slim_validation_for_cloud`)
-or install a current `splunk-packaging-toolkit` release with an up-to-date
-`splunk-releases.json` to re-verify the `^9.1` requirement directly.
+   The fix applied: `platformRequirements` is now `null`. `platformRequirements`
+   is an optional field — several real Splunk-published apps (e.g.
+   [`stamus_for_splunk`](https://github.com/StamusNetworks/stamus_for_splunk/blob/master/app.manifest),
+   [`TA-misp_es`](https://github.com/splunk/TA-misp_es/blob/master/app.manifest))
+   ship it as `null` or omit it entirely, leaving the minimum-Splunk-version
+   claim to prose documentation (see `INSTALL.md`) instead of a manifest
+   field. This removes the whole class of "did I get the exact version-range
+   syntax the authoritative validator expects" risk, rather than trading one
+   guess (`^9.1`) for another (`>=9.1.0`) without being able to verify it
+   against the real SSAI validator myself.
 
-`checkSlimValidation` doesn't hardcode `^9.1` as an accepted string — it
-reads `platformRequirements.splunk.Enterprise` from `app.manifest` at run
-time and only tolerates a SLIM error that matches *that* declared range
-exactly. If the range is legitimately changed in the future, the accepted
-message updates itself automatically; any error that doesn't match it
-still fails the release, which is the correct fail-closed default if a
-future `splunk-packaging-toolkit` release ever reports something new and
-genuine against this app.
+After this fix, `slim validate` reports `[INFO] App validation complete`
+with no errors, both locally and (per user report) in the real,
+authoritative SSAI validation path.
+
+If a future maintainer wants to re-add `platformRequirements`, verify the
+exact accepted syntax against the real SSAI/AppInspect API first — this
+project doesn't have a reliable way to test against that authoritative
+source directly, only against the pip-published `splunk-packaging-toolkit`,
+which is not sufficient on its own (see above).
+
+`checkSlimValidation` in `scripts/validate-release.js` reads
+`platformRequirements.splunk.Enterprise` from `app.manifest` at run time
+(currently absent, so this is inert) and would only ever tolerate a SLIM
+error that matches that declared range exactly, as a narrow defensive
+allowance if `platformRequirements` is reintroduced later — every other
+SLIM error still fails the release unconditionally.
