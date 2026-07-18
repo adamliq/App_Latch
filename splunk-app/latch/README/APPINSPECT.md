@@ -1,6 +1,6 @@
-# AppInspect
+# AppInspect and SLIM validation
 
-## How to run it locally
+## AppInspect: how to run it locally
 
 `splunk-appinspect`'s own dependency pin (`painter`) fails to build against
 current `setuptools` unless an older `setuptools` is installed first. A
@@ -61,3 +61,59 @@ during development of this app, both now fixed:
    stanza (in addition to the older `[package] id = <app_id>`). Both are
    now present and kept in sync by `scripts/build.js`'s version-consistency
    check.
+
+## SLIM (Splunk Packaging Toolkit): how to run it locally
+
+`check_that_app_passes_slim_validation_for_cloud` is an AppInspect check
+that, in Splunk's hosted AppInspect API service, shells out to the actual
+Splunk Packaging Toolkit (`slim`) to validate `app.manifest` and package
+structure. It is **not included** in the `splunk-appinspect` PyPI package
+(confirmed: it does not appear in `splunk-appinspect list checks` for
+4.2.1), so `--mode precert` above cannot exercise it. `slim` itself,
+however, is separately pip-installable and can be run directly:
+
+```bash
+python3 -m venv /tmp/spt-venv
+/tmp/spt-venv/bin/pip install --upgrade pip
+/tmp/spt-venv/bin/pip install splunk-packaging-toolkit
+
+# If your shell exports both NO_PROXY and no_proxy, unset one before running
+# slim — its config loader treats them as a single case-insensitive
+# ConfigParser section and raises DuplicateOptionError otherwise. This is a
+# quirk of slim's own config loading, unrelated to this app.
+env -u no_proxy -u https_proxy /tmp/spt-venv/bin/slim validate splunk-app/latch
+```
+
+### What this caught, and its own limitation
+
+Running it against this app found and led to fixing one real defect, and
+also exposed a limitation in the pip-published `slim` package itself:
+
+1. **Real defect (fixed):** `app.manifest`'s `platformRequirements.splunk`
+   originally declared both `"Enterprise": "^9.1"` and `"Cloud": "*"`. `slim`
+   rejected `"Cloud"` outright — `Expected a Splunk edition name, not
+   "Cloud"` — because `platformRequirements.splunk` only recognizes the
+   pre-Cloud-era edition names (`Enterprise`, `Free`, `Light`). Splunk
+   Cloud Platform compatibility is not something `app.manifest` declares at
+   all; it's evidenced by passing AppInspect's Cloud-tagged checks (which
+   this app does — see above) rather than by a manifest field. The invalid
+   `"Cloud"` key has been removed.
+2. **Tool limitation (not a defect in this app):** with the invalid key
+   removed, `slim validate` still reports
+   `Version requirement includes no supported version of Splunk Enterprise: ^9.1`.
+   This pip package (`splunk-packaging-toolkit` 1.2.8) ships a static,
+   stale `splunk-releases.json` whose newest known Enterprise release is
+   **8.0.0** — it has no knowledge that 9.x exists, regardless of what
+   range syntax is used. This was confirmed by re-running validation
+   against an identical manifest with the range temporarily lowered to
+   `"^8.0"`, which passed both `slim validate` and `slim package` cleanly —
+   proving the `^`-range syntax itself, and every other part of the
+   package, is valid; only this package's bundled version list is out of
+   date. Splunk's hosted AppInspect API service (used for real Splunkbase
+   submissions) uses a current, continuously updated release list and
+   would not hit this.
+
+Before a real Splunkbase submission, either use the hosted AppInspect API
+(which runs the real, current `check_that_app_passes_slim_validation_for_cloud`)
+or install a current `splunk-packaging-toolkit` release with an up-to-date
+`splunk-releases.json` to re-verify the `^9.1` requirement directly.

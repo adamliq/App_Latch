@@ -47,8 +47,7 @@
     "incompatibleApps": {},
     "platformRequirements": {
         "splunk": {
-            "Enterprise": "^9.1",
-            "Cloud": "*"
+            "Enterprise": "^9.1"
         }
     }
 }
